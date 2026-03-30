@@ -1,22 +1,25 @@
 <?php	
 session_start();
-require('config.php');
+//require('config.php');
 // ADMIN  Original:  https://webdamn.com/user-management-system-with-php-mysql/
-class User extends Dbconfig {	
-    protected $hostName;
-    protected $userName;
-    protected $password;
-	protected $dbName;
+class User {//extends Dbconfig {	
+//    protected $hostName;
+//    protected $userName;
+//    protected $password;
+//	protected $dbName;
 	private $userTable = 'site_intake_details';
 	private $dbConnect = false;
     public function __construct(){
         if(!$this->dbConnect){ 		
-			$database = new dbConfig();            
-            $this -> hostName = $database -> serverName;
-            $this -> userName = $database -> userName;
-            $this -> password = $database ->password;
-			$this -> dbName = $database -> dbName;			
-            $conn = new mysqli(hostName, userName, password, dbName);
+//			$database = new dbConfig();            
+//            $this -> hostName = $database -> serverName;
+//            $this -> userName = $database -> userName;
+//            $this -> password = $database ->password;
+//			$this -> dbName = $database -> dbName;			
+//            $conn = new mysqli(hostName, userName, password, dbName);
+$conn = new mysqli($DB_SERVER ="localhost", $DB_USER = "root", 
+$DB_PASS = "", $DB_NAME = "sites");
+
             if($conn->connect_error){
                 die("Error failed to connect to MySQL: " . $conn->connect_error);
             } else{

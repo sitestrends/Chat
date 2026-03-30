@@ -8,21 +8,39 @@ const server = http.createServer(app);
 // IMPORTANT: allow your domain (or use "*" for testing)
 const io = new Server(server, {
   cors: {
-    origin: "*", // later replace with your domain
-    methods: ["GET", "POST"]
+    origin: [
+      "https://sitesfortrends.com",
+      "http://localhost:3000"
+    ],
+    methods: ["GET", "POST"],
+    credentials: true
   }
 });
 
 io.on("connection", (socket) => {
+
+  socket.on("join_project", (project_id) => {
+    socket.join("project_" + project_id);
+  });
+
+});
+
+
+io.on("connection", (socket) => {
+
   console.log("User connected:", socket.id);
 
   socket.on("send_message", (data) => {
-    io.emit("receive_message", data);
+
+    const room = "project_" + data.project_id; // define room based on project
+
+    // join the socket to that room (server-side)
+    socket.join(room);
+
+    // emit only to that room
+    io.to(room).emit("receive_message", data);
   });
 
-  socket.on("disconnect", () => {
-    console.log("User disconnected:", socket.id);
-  });
 });
 
 // IMPORTANT for Railway
@@ -31,6 +49,45 @@ const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
   console.log("Server running on port", PORT);
 });
+
+// MySQL connection setup
+const mysql = require("mysql2");
+
+const db = mysql.createConnection({
+  host: "localhost",
+  user: "root",
+  password: "",
+  database: "site_intake_details"
+});
+// Update Socket.IO connection handler to save messages to DB
+io.on("connection", (socket) => {
+  socket.on("send_message", (data) => {
+
+    const { sender_id, receiver_id, message, project_id } = data;
+
+    // Save to DB
+    db.query(
+      "INSERT INTO site_messages (sender_id, receiver_id, project_id, message) VALUES (?, ?, ?, ?)",
+      [sender_id, receiver_id, project_id, message],
+      (err, result) => {
+        if (err) {
+          console.error(err);
+          return;
+        }
+
+        // Emit to clients
+        io.emit("receive_message", {
+          id: result.insertId,
+          sender_id,
+          receiver_id,
+          message,
+          project_id
+        });
+      }
+    );
+  });
+});
+
 /*const io = require('socket.io')(3000, {
     cors: { origin: "*" }
 });

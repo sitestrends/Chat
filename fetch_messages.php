@@ -1,9 +1,10 @@
 <?php
-include('/home/1379323.cloudwaysapps.com/cvaateanrh/private_html/admin/class/User3.php');
-
+include('User3.php');
+$conn = new mysqli($DB_SERVER ="localhost", $DB_USER = "root", 
+$DB_PASS = "", $DB_NAME = "sites");
 $user_id = $_SESSION['userid'];
 
-$messages = mysqli_query($db, "
+$messages = mysqli_query($conn, "
     SELECT * FROM site_messages 
     WHERE user_id = $user_id 
     ORDER BY created DESC

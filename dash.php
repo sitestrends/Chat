@@ -5,10 +5,11 @@ include('User3.php');
 include('header2.php');
 $user = new User();
 // $_SESSION['userid'] = $user_id;
-if (!isset($_SESSION['userid'])) {
-    die("Please log in.");
-}
-
+//if (!isset($_SESSION['userid'])) {
+//    die("Please log in.");
+//}
+$db = new mysqli($DB_SERVER ="localhost", $DB_USER = "root", 
+$DB_PASS = "", $DB_NAME = "sites");
 $user_id = $_SESSION['userid'];
 
 $user = mysqli_fetch_assoc(mysqli_query($db, "SELECT * FROM site_intake_details WHERE id = $user_id"));
@@ -191,6 +192,68 @@ setInterval(() => {
     .then(data => document.getElementById('messagesBox').innerHTML = data);
 }, 5000);
 </script>
+<script>
+const USER_ID = <?php echo $_SESSION['userid']; ?>;
+
+socket.emit("send_message", {
+  sender_id: USER_ID,
+  receiver_id: selectedUserId,
+  project_id: currentProjectId,
+  message: messageInput.value
+});
+
+socket.on("receive_message", (data) => {
+  // Only show if relevant to this user
+  if (
+    data.sender_id == USER_ID ||
+    data.receiver_id == USER_ID
+  ) {
+    displayMessage(data);
+  }
+});
+
+fetch(`get_messages.php?user_id=${selectedUserId}`)
+  .then(res => res.json())
+  .then(messages => {
+    messages.forEach(displayMessage);
+  });
+// Broadcasting to everyone
+  socket.join("project_" + project_id);
+// Private
+//  io.to("project_" + project_id).emit(...)
+
+function displayMessage(data) {
+  const box = document.getElementById("messagesBox");
+
+  const div = document.createElement("div");
+  div.classList.add("message");
+
+  div.innerHTML = `
+    <strong>${data.sender_id}:</strong> ${data.message}
+  `;
+
+  box.appendChild(div);
+
+  // auto scroll
+  box.scrollTop = box.scrollHeight;
+}
+socket.on("receive_message", (data) => {
+  displayMessage(data);
+});
+
+document.getElementById("sendBtn").addEventListener("click", () => {
+  const input = document.getElementById("messageInput");
+
+  socket.emit("send_message", {
+    sender_id: USER_ID,
+    receiver_id: selectedUserId,
+    message: input.value
+  });
+
+  input.value = "";
+});
+
+</script>
 
 </head>
 
@@ -203,7 +266,6 @@ setInterval(() => {
         </div>	
 
 <div class="sidebar">
-<div id="particles-js"></div>
     <h2>🚀 Client Panel</h2>
     <a onclick="showTab('dashboard')">Dashboard</a>
     <a onclick="showTab('projects')">Projects</a>
@@ -250,7 +312,7 @@ setInterval(() => {
 
 <?php while ($row = mysqli_fetch_assoc($notes)): ?>
 <tr>
-<td><?php echo $row['project_name'] ?: "Project #".$row['id']; ?></td>
+<td><?php echo $row['project_type'] ?: "Project #".$row['id']; ?></td>
 
 <td><span class="badge <?php echo $row['status']; ?>"><?php echo $row['status']; ?></span></td>
 
@@ -287,6 +349,9 @@ setInterval(() => {
 <div id="messages" class="section" style="display:none;">
 
 <div class="card">
+
+<div id="chatBox"></div>
+
 <h3>Messages</h3>
 
 <div id="messagesBox">
@@ -300,13 +365,17 @@ setInterval(() => {
 
 <hr>
 
-<form method="POST" action="send_message.php">
+<!--<form method="POST" action="send_message.php">
 <textarea name="message" style="width:100%; height:70px;"></textarea><br><br>
 <button class="btn-primary">Send</button>
+</form>-->
+
+<form onsubmit="sendMessage(event)">
+    <textarea id="msgInput" name="message"></textarea><br><br>
+    <button class="btn">Send</button>
 </form>
 
 </div>
-
 </div>
 
 </div>
