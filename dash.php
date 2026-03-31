@@ -10,8 +10,13 @@ $user = new User();
 //}
 $db = new mysqli($DB_SERVER ="localhost", $DB_USER = "root", 
 $DB_PASS = "", $DB_NAME = "sites");
-$user_id = $_SESSION['userid'];
+        $results = $db->query("SELECT * FROM site_intake_details WHERE id != 'id'");
+        $row = mysqli_fetch_array($results, MYSQLI_ASSOC);
+        $_SESSION['userid'] = $row['id'];
+        $user_id = $_SESSION['userid'];
 
+echo "row id : " . $row['id'];
+echo "session id : " . $_SESSION['userid'];
 $user = mysqli_fetch_assoc(mysqli_query($db, "SELECT * FROM site_intake_details WHERE id = $user_id"));
 $notes = mysqli_query($db, "SELECT * FROM site_intake_details WHERE id = $user_id ORDER BY created DESC");
 $submissions = mysqli_query($db, "SELECT * FROM site_submissions WHERE id = $user_id ORDER BY id DESC");
@@ -180,81 +185,6 @@ textarea { width:100%; height:80px;
 }
 </style>
 
-<script>
-function showTab(tab) {
-    document.querySelectorAll('.section').forEach(el => el.style.display='none');
-    document.getElementById(tab).style.display='block';
-}
-
-setInterval(() => {
-    fetch('fetch_messages.php')
-    .then(res => res.text())
-    .then(data => document.getElementById('messagesBox').innerHTML = data);
-}, 5000);
-</script>
-<script>
-const USER_ID = <?php echo $_SESSION['userid']; ?>;
-
-socket.emit("send_message", {
-  sender_id: USER_ID,
-  receiver_id: selectedUserId,
-  project_id: currentProjectId,
-  message: messageInput.value
-});
-
-socket.on("receive_message", (data) => {
-  // Only show if relevant to this user
-  if (
-    data.sender_id == USER_ID ||
-    data.receiver_id == USER_ID
-  ) {
-    displayMessage(data);
-  }
-});
-
-fetch(`get_messages.php?user_id=${selectedUserId}`)
-  .then(res => res.json())
-  .then(messages => {
-    messages.forEach(displayMessage);
-  });
-// Broadcasting to everyone
-  socket.join("project_" + project_id);
-// Private
-//  io.to("project_" + project_id).emit(...)
-
-function displayMessage(data) {
-  const box = document.getElementById("messagesBox");
-
-  const div = document.createElement("div");
-  div.classList.add("message");
-
-  div.innerHTML = `
-    <strong>${data.sender_id}:</strong> ${data.message}
-  `;
-
-  box.appendChild(div);
-
-  // auto scroll
-  box.scrollTop = box.scrollHeight;
-}
-socket.on("receive_message", (data) => {
-  displayMessage(data);
-});
-
-document.getElementById("sendBtn").addEventListener("click", () => {
-  const input = document.getElementById("messageInput");
-
-  socket.emit("send_message", {
-    sender_id: USER_ID,
-    receiver_id: selectedUserId,
-    message: input.value
-  });
-
-  input.value = "";
-});
-
-</script>
-
 </head>
 
 <body>
@@ -381,3 +311,129 @@ document.getElementById("sendBtn").addEventListener("click", () => {
 </div>
 
 </div>
+<script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+
+<script>
+const socket = io("https://chat-production-14cd.up.railway.app");
+
+const USER_ID = <?php echo $_SESSION['userid']; ?>;
+let currentProjectId = null;
+
+// open project
+function openProject(projectId) {
+  currentProjectId = projectId;
+
+  socket.emit("join_project", projectId);
+
+  fetch(`get_messages.php?project_id=${projectId}`)
+    .then(res => res.json())
+    .then(messages => {
+      const box = document.getElementById("messagesBox");
+      box.innerHTML = "";
+      messages.forEach(displayMessage);
+    });
+}
+
+// receive
+socket.on("receive_message", (data) => {
+  if (data.project_id == currentProjectId) {
+    displayMessage(data);
+  }
+});
+
+// send
+/*document.getElementById("sendBtn").addEventListener("click", () => {
+  const input = document.getElementById("msgInput");
+  const message = input.value.trim();
+
+  if (!message || !currentProjectId) return;
+
+  socket.emit("send_message", {
+    sender_id: USER_ID,
+    project_id: currentProjectId,
+    message: message
+  });
+
+  input.value = "";
+});     */
+
+// protect against crashes
+const btn = document.getElementById("sendBtn");
+
+if (btn) {
+  btn.addEventListener("click", () => {
+    // send message
+  });
+}
+/*
+document.getElementById("chatForm").addEventListener("submit", function(e) {
+  e.preventDefault();
+
+  const input = document.getElementById("msgInput");
+  const message = input.value.trim();
+
+  if (!message || !currentProjectId) return;
+
+  socket.emit("send_message", {
+    sender_id: USER_ID,
+    project_id: currentProjectId,
+    message: message
+  });
+
+  input.value = "";
+}); */
+// display
+function displayMessage(data) {
+  const box = document.getElementById("messagesBox");
+
+  const div = document.createElement("div");
+  div.classList.add("message");
+
+  div.innerHTML = `<strong>User ${data.sender_id}:</strong> ${data.message}`;
+
+  box.appendChild(div);
+}
+</script>
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+
+  const socket = io("https://chat-production-14cd.up.railway.app");
+  const USER_ID = <?php echo $_SESSION['userid']; ?>;
+
+  let currentProjectId = null;
+
+  const form = document.getElementById("chatForm");
+
+  if (form) {
+    form.addEventListener("submit", function(e) {
+      e.preventDefault();
+
+      const input = document.getElementById("msgInput");
+      const message = input.value.trim();
+
+      if (!message || !currentProjectId) return;
+
+      socket.emit("send_message", {
+        sender_id: USER_ID,
+        project_id: currentProjectId,
+        message: message
+      });
+
+      input.value = "";
+    });
+  }
+
+});
+</script>
+<script>
+function showTab(tab) {
+    document.querySelectorAll('.section').forEach(el => el.style.display='none');
+    document.getElementById(tab).style.display='block';
+}
+
+setInterval(() => {
+    fetch('fetch_messages.php')
+    .then(res => res.text())
+    .then(data => document.getElementById('messagesBox').innerHTML = data);
+}, 5000);
+</script>
