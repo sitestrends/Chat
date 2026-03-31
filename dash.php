@@ -21,6 +21,28 @@ $user = mysqli_fetch_assoc(mysqli_query($db, "SELECT * FROM site_intake_details 
 $notes = mysqli_query($db, "SELECT * FROM site_intake_details WHERE id = $user_id ORDER BY created DESC");
 $submissions = mysqli_query($db, "SELECT * FROM site_submissions WHERE id = $user_id ORDER BY id DESC");
 $messages = mysqli_query($db, "SELECT * FROM site_messages WHERE user_id = $user_id ORDER BY created DESC LIMIT 5");
+/* {
+  "name": "realtime",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "cors": "^2.8.6",
+    "express": "^5.2.1",
+    "mysql2": "^3.20.0",
+    "socket.io": "^4.8.3"
+  }
+}*/
+
+
 ?>
 
 <!DOCTYPE html>

@@ -5,11 +5,12 @@ const { Server } = require("socket.io");
 const app = express();
 const server = http.createServer(app);
 
-// ✅ REQUIRED for Railway
+// ✅ REQUIRED for Railway (health check)
 app.get("/", (req, res) => {
-  res.send("Server is running");
+  res.send("OK");
 });
 
+// ✅ Socket.IO setup
 const io = new Server(server, {
   cors: {
     origin: "*"
@@ -28,7 +29,7 @@ io.on("connection", (socket) => {
   });
 });
 
-// ✅ MUST use process.env.PORT
+// ✅ CRITICAL: Railway port
 const PORT = process.env.PORT || 8080;
 
 server.listen(PORT, () => {
