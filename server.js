@@ -77,7 +77,7 @@ io.on("connection", (socket) => {
 }); */
 
 // IMPORTANT for Railway
-const PORT = process.env.PORT || 3000;
+/*const PORT = process.env.PORT || 3000;
 
 server.listen(PORT, () => {
   console.log("Server running on port", PORT);
@@ -96,7 +96,7 @@ io.on("connection", (socket) => {
     io.to(room).emit("receive_message", data);
   });
 
-});
+}); */
 // MySQL connection setup
 /*const mysql = require("mysql2");
 
