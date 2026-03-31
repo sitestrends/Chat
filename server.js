@@ -17,6 +17,8 @@ const io = new Server(server, {
   }
 });
 
+  const socket = io("https://chat-production-14cd.up.railway.app");
+  
 io.on("connection", (socket) => {
 
   socket.on("join_project", (project_id) => {
@@ -25,7 +27,7 @@ io.on("connection", (socket) => {
 
 });
 
-
+/*
 io.on("connection", (socket) => {
 
   console.log("User connected:", socket.id);
@@ -41,7 +43,7 @@ io.on("connection", (socket) => {
     io.to(room).emit("receive_message", data);
   });
 
-});
+}); */
 
 // IMPORTANT for Railway
 const PORT = process.env.PORT || 3000;
@@ -50,17 +52,31 @@ server.listen(PORT, () => {
   console.log("Server running on port", PORT);
 });
 
+io.on("connection", (socket) => {
+
+  socket.on("join_project", (project_id) => {
+    socket.join("project_" + project_id);
+  });
+
+  // ✅ ONLY ONE handler
+  socket.on("send_message", (data) => {
+    const room = "project_" + data.project_id;
+
+    io.to(room).emit("receive_message", data);
+  });
+
+});
 // MySQL connection setup
-const mysql = require("mysql2");
+/*const mysql = require("mysql2");
 
 const db = mysql.createConnection({
   host: "localhost",
   user: "root",
   password: "",
   database: "site_intake_details"
-});
+}); */
 // Update Socket.IO connection handler to save messages to DB
-io.on("connection", (socket) => {
+/*io.on("connection", (socket) => {
   socket.on("send_message", (data) => {
 
     const { sender_id, receiver_id, message, project_id } = data;
@@ -86,7 +102,7 @@ io.on("connection", (socket) => {
       }
     );
   });
-});
+}); */
 
 /*const io = require('socket.io')(3000, {
     cors: { origin: "*" }
